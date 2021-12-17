@@ -1,16 +1,18 @@
 import os
 import numpy as np
 # import tensorflow as tf
-
 import tensorflow.compat.v1 as tf
-tf.disable_v2_behavior()
-
 from numpy.random import seed
 # from tensorflow import set_random_seed
 from time import strftime
 from PIL import Image
 # https://stackoverflow.com/questions/59823283/could-not-load-dynamic-library-cudart64-101-dll-on-tensorflow-cpu-only-install
 # https://docs.nvidia.com/cuda/cuda-installation-guide-microsoft-windows/index.html#download-cuda-software
+# (venv) tensorboard --logdir=C:\Users\JMAT\PycharmProjects\HandWrittingRecognize\tensorboard_mnist_digit_logs
+
+tf.disable_v2_behavior()
+num_examples = 0
+index_in_epoch = 0
 
 
 def next_batch(batch_size, data, labels):
@@ -173,13 +175,15 @@ def hand_writing_fnt(name):
 
     # Batching the Data
     size_of_batch = 1000
-
     global num_examples
+    global index_in_epoch
+
+    # global num_examples
+    # global index_in_epoch
 
     num_examples = y_train.shape[0]
     nr_iterations = int(num_examples / size_of_batch)
 
-    global index_in_epoch
     index_in_epoch = 0
 
     for epoch in range(nr_epochs):
@@ -204,6 +208,24 @@ def hand_writing_fnt(name):
         validation_writer.add_summary(summary, epoch)
 
     print('Done training!')
+
+    # Make a Prediction
+    img = Image.open('MNIST/test_img.png')
+
+    # black and white
+    bw = img.convert('L')
+    img_array = np.invert(bw)
+    print('Array.shape', img_array.shape)
+    test_img = img_array.ravel()
+
+    print('Flattened Array.shape', test_img.shape)
+
+    prediction = sess.run(fetches=tf.argmax(output, axis=1), feed_dict={X: [test_img]})
+    print(f'Prediction for test image is {prediction}')
+
+    # Testing and Evaluation
+    test_accuracy = sess.run(fetches=accuracy, feed_dict={X: x_test, Y: y_test})
+    print(f'Accuracy on test set is {test_accuracy:0.2%}')
 
     # Reset for the Next Run
     train_writer.close()
