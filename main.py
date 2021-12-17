@@ -95,8 +95,8 @@ def hand_writing_fnt_1(name):
     # X = tf.placeholder(tf.float32, shape=[None, TOTAL_INPUTS], name='X')
     # Y = tf.placeholder(tf.float32, shape=[None, NR_CLASSES], name='labels')
 
-    X = tf.compat.v1.placeholder(tf.float32, shape=[None, TOTAL_INPUTS])
-    Y = tf.compat.v1.placeholder(tf.float32, shape=[None, NR_CLASSES])
+    X = tf.compat.v1.placeholder(tf.float32, shape=[None, TOTAL_INPUTS], name='X')
+    Y = tf.compat.v1.placeholder(tf.float32, shape=[None, NR_CLASSES], name='labels')
 
     # X = tf.Variable(tf.ones(shape=[None, TOTAL_INPUTS]), dtype=tf.float32, name='X')
     # Y = tf.Variable(tf.ones(shape=[None, NR_CLASSES]), dtype=tf.float32, name='labels')
@@ -252,11 +252,23 @@ def hand_writing_fnt_2(name):
     y_test = np.loadtxt(Y_TEST_PATH, delimiter=',', dtype=int)
     print(f'Shape of y_test {y_test.shape}')
 
+    # Create Session
     graph = tf.Graph()
     sess = tf.Session(graph=graph)
     # from tensorflow.compat.v1.saved_model import load
     tf.compat.v1.saved_model.load(sess=sess, tags=[tag_constants.SERVING], export_dir='savedModel')
+
+    # Run Session & Make Prediction
+    X = graph.get_tensor_by_name('X:0')
+    y_pred = graph.get_tensor_by_name('accuracy_calc/prediction:0')
+    print('X: ', X)
+
+    prediction = sess.run(fetches=y_pred, feed_dict={X: x_test})
+
+    print('y_test: ', y_test[0:5])
+    print('prediction: ', prediction[0:5])
     print(f'Hi, {name}')
+
 
 
 # Press the green button in the gutter to run the script.
@@ -266,8 +278,10 @@ if __name__ == '__main__':
     # tf.random.set_seed(404)
 
     tf.compat.v1.disable_eager_execution()
-
-    # hand_writing_fnt_1('Finished app!')
-    hand_writing_fnt_2('Loading model')
+    k = 1
+    if k == 0:
+        hand_writing_fnt_1('Finished app!')
+    else:
+        hand_writing_fnt_2('Loading model')
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
