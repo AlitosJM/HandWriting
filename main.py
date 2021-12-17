@@ -3,6 +3,7 @@ import numpy as np
 # import tensorflow as tf
 import tensorflow.compat.v1 as tf
 from numpy.random import seed
+from tensorflow.compat.v1.saved_model import tag_constants
 # from tensorflow import set_random_seed
 from time import strftime
 from PIL import Image
@@ -53,7 +54,7 @@ def setup_layer(input, weight_dim, bias_dim, name):
         return layer_out
 
 
-def hand_writing_fnt(name):
+def hand_writing_fnt_1(name):
 
     X_TRAIN_PATH = 'MNIST/digit_xtrain.csv'
     X_TEST_PATH = 'MNIST/digit_xtest.csv'
@@ -145,7 +146,8 @@ def hand_writing_fnt(name):
 
     # Accuracy Metric
     with tf.name_scope('accuracy_calc'):
-        correct_pred = tf.equal(tf.argmax(output, axis=1), tf.argmax(Y, axis=1))
+        model_prediction = tf.argmax(output, axis=1, name='prediction')
+        correct_pred = tf.equal(model_prediction, tf.argmax(Y, axis=1))
         accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
 
     with tf.name_scope('performance'):
@@ -209,6 +211,11 @@ def hand_writing_fnt(name):
 
     print('Done training!')
 
+    # Saving model
+    outputs = {'accuracy_calc/prediction': model_prediction}
+    inputs = {'X': X}
+    tf.compat.v1.saved_model.simple_save(sess, 'savedModel', inputs, outputs)
+
     # Make a Prediction
     img = Image.open('MNIST/test_img.png')
 
@@ -232,10 +239,24 @@ def hand_writing_fnt(name):
     validation_writer.close()
     sess.close()
     tf.reset_default_graph()
-
-
-
     print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
+
+
+def hand_writing_fnt_2(name):
+    X_TEST_PATH = 'MNIST/load_xtest.csv'
+    Y_TEST_PATH = 'MNIST/load_ytest.csv'
+
+    x_test = np.loadtxt(X_TEST_PATH, delimiter=',', dtype=float)
+    print(f'Shape of x_test {x_test.shape}')
+
+    y_test = np.loadtxt(Y_TEST_PATH, delimiter=',', dtype=int)
+    print(f'Shape of y_test {y_test.shape}')
+
+    graph = tf.Graph()
+    sess = tf.Session(graph=graph)
+    # from tensorflow.compat.v1.saved_model import load
+    tf.compat.v1.saved_model.load(sess=sess, tags=[tag_constants.SERVING], export_dir='savedModel')
+    print(f'Hi, {name}')
 
 
 # Press the green button in the gutter to run the script.
@@ -246,6 +267,7 @@ if __name__ == '__main__':
 
     tf.compat.v1.disable_eager_execution()
 
-    hand_writing_fnt('Finished app!')
+    # hand_writing_fnt_1('Finished app!')
+    hand_writing_fnt_2('Loading model')
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
